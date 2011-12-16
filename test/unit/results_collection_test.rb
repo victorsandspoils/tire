@@ -57,6 +57,13 @@ module Tire
         end
       end
 
+      should "be kaminari compatible" do
+        collection = Results::Collection.new(@default_response)
+        %w(limit_value total_count num_pages offset_value).each do |method|
+          assert_respond_to collection, method
+        end
+      end
+
       context "wrapping results" do
 
         setup do
@@ -184,6 +191,11 @@ module Tire
 
         should "return current page" do
           assert_equal 2, @collection.current_page
+        end
+
+        should "return current page for empty result" do
+          collection = Results::Collection.new( { 'hits' => { 'hits' => [], 'total' => 0 } } )
+          assert_equal 1, collection.current_page
         end
 
         should "return previous page" do

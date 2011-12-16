@@ -29,6 +29,9 @@ module Tire
         create_table :active_record_class_with_tire_methods do |t|
           t.string     :title
         end
+        create_table :active_record_class_with_dynamic_index_names do |t|
+          t.string     :title
+        end
       end
     end
 
@@ -70,6 +73,14 @@ module Tire
         assert         results.first.persisted?, "Record should be persisted"
         assert_not_nil results.first._score
         assert_equal   'Test', results.first.title
+      end
+
+      should "raise exception on invalid query" do
+        ActiveRecordArticle.create! :title => 'Test'
+
+        assert_raise Search::SearchRequestFailed do
+          ActiveRecordArticle.search '[x'
+        end
       end
 
       context "with eager loading" do
@@ -147,10 +158,19 @@ module Tire
             results = ActiveRecordArticle.search 'test*', :sort => 'title', :per_page => 5, :page => 1
             assert_equal 5, results.size
 
+            # WillPaginate
+            #
             assert_equal 2, results.total_pages
             assert_equal 1, results.current_page
             assert_equal nil, results.previous_page
             assert_equal 2, results.next_page
+
+            # Kaminari
+            #
+            assert_equal 5, results.limit_value
+            assert_equal 9, results.total_count
+            assert_equal 2, results.num_pages
+            assert_equal 0, results.offset_value
 
             assert_equal 'Test1', results.first.title
           end
@@ -164,6 +184,12 @@ module Tire
             assert_equal 1, results.previous_page
             assert_equal nil, results.next_page
 
+            #kaminari
+            assert_equal 5, results.limit_value
+            assert_equal 9, results.total_count
+            assert_equal 2, results.num_pages
+            assert_equal 5, results.offset_value
+
             assert_equal 'Test6', results.first.title
           end
 
@@ -175,6 +201,12 @@ module Tire
             assert_equal 3, results.current_page
             assert_equal 2, results.previous_page
             assert_equal nil, results.next_page
+
+            #kaminari
+            assert_equal 5, results.limit_value
+            assert_equal 9, results.total_count
+            assert_equal 2, results.num_pages
+            assert_equal 10, results.offset_value
 
             assert_nil results.first
           end
@@ -265,6 +297,21 @@ module Tire
           assert_equal 'One', results.first.title
         end
 
+      end
+
+      context "with dynamic index name" do
+        setup do
+          @a = ActiveRecordClassWithDynamicIndexName.create! :title => 'Test'
+          @a.index.refresh
+        end
+
+        should "search in proper index" do
+          assert_equal 'dynamic_index', ActiveRecordClassWithDynamicIndexName.index.name
+          assert_equal 'dynamic_index', @a.index.name
+
+          results = ActiveRecordClassWithDynamicIndexName.search 'test'
+          assert_equal 'dynamic_index', results.first._index
+        end
       end
 
       context "within Rails" do

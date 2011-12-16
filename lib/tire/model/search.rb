@@ -89,6 +89,9 @@ module Tire
             block.arity < 1 ? s.instance_eval(&block) : block.call(s)
           else
             s.query { string query }
+            # TODO: Actualy, allow passing all the valid options from
+            # <http://www.elasticsearch.org/guide/reference/api/search/uri-request.html>
+            s.fields Array(options[:fields]) if options[:fields]
           end
 
           s.perform.results
@@ -99,7 +102,8 @@ module Tire
         # Example usage: `Article.index.refresh`.
         #
         def index
-          @index = Index.new(index_name)
+          name = index_name.respond_to?(:to_proc) ? klass.instance_eval(&index_name) : index_name
+          @index = Index.new(name)
         end
 
       end
@@ -120,8 +124,7 @@ module Tire
         #
         # On model destroy, it will remove the corresponding document from the index.
         #
-        # It will also call the `<after|before>_update_elasticsearch_index` callbacks,
-        # if defined by the model.
+        # It will also execute any `<after|before>_update_elasticsearch_index` callback hooks.
         #
         def update_index
           instance.send :_run_update_elasticsearch_index_callbacks do
@@ -150,7 +153,7 @@ module Tire
         #
         def to_indexed_json
           if instance.class.tire.mapping.empty?
-            instance.to_hash.to_json
+            instance.to_hash.reject {|key,_| key.to_s == 'id' || key.to_s == 'type' }.to_json
           else
             instance.to_hash.
             reject { |key, value| ! instance.class.tire.mapping.keys.map(&:to_s).include?(key.to_s) }.
@@ -236,6 +239,11 @@ module Tire
             @__tire__.instance_eval(&block) if block_given?
             @__tire__
           end
+
+          # Define _Tire's_ callbacks (<after|before>_update_elasticsearch_index).
+          #
+          define_model_callbacks(:update_elasticsearch_index, :only => [:after, :before]) if \
+            respond_to?(:define_model_callbacks)
 
           # Serialize the model as a Hash.
           #

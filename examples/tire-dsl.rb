@@ -477,6 +477,7 @@ end
 # * [term](http://elasticsearch.org/guide/reference/query-dsl/term-query.html)
 # * [terms](http://elasticsearch.org/guide/reference/query-dsl/terms-query.html)
 # * [bool](http://www.elasticsearch.org/guide/reference/query-dsl/bool-query.html)
+# * [custom_score](http://www.elasticsearch.org/guide/reference/query-dsl/custom-score-query.html)
 # * [all](http://www.elasticsearch.org/guide/reference/query-dsl/match-all-query.html)
 # * [ids](http://www.elasticsearch.org/guide/reference/query-dsl/ids-query.html)
 
@@ -582,6 +583,7 @@ end
 # * [date](http://www.elasticsearch.org/guide/reference/api/search/facets/date-histogram-facet.html)
 # * [range](http://www.elasticsearch.org/guide/reference/api/search/facets/range-facet.html)
 # * [histogram](http://www.elasticsearch.org/guide/reference/api/search/facets/histogram-facet.html)
+# * [query](http://www.elasticsearch.org/guide/reference/api/search/facets/query-facet.html)
 
 # We have seen that _ElasticSearch_ facets enable us to fetch complex aggregations from our data.
 #
@@ -697,7 +699,7 @@ s = Tire.search 'articles' do
 
     # and by their `title` property, in _descending_ order.
     #
-    by :title 'desc'
+    by :title, 'desc'
   end
 end
 

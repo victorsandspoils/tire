@@ -17,13 +17,13 @@ module Tire
       def terms(field, options={})
         size      = options.delete(:size) || 10
         all_terms = options.delete(:all_terms) || false
-        @value = { :terms => { :field => field, :size => size, :all_terms => all_terms } }.update(options)
+        @value = { :terms => { :field => field, :size => size, :all_terms => all_terms }.update(options) }
         self
       end
 
       def date(field, options={})
         interval = options.delete(:interval) || 'day'
-        @value = { :date_histogram => { :field => field, :interval => interval } }.update(options)
+        @value = { :date_histogram => { :field => field, :interval => interval }.update(options) }
         self
       end
 
@@ -35,6 +35,10 @@ module Tire
       def histogram(field, options={})
         @value = { :histogram => (options.delete(:histogram) || {:field => field}.update(options)) }
         self
+      end
+
+      def query(&block)
+        @value = { :query => Query.new(&block).to_hash }
       end
 
       def to_json

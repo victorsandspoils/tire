@@ -1,9 +1,21 @@
 require 'rubygems'
-require 'active_record'
+require 'mongoid'
 
-class ActiveRecordArticle < ActiveRecord::Base
-  has_many :comments, :class_name => "ActiveRecordComment", :foreign_key => "article_id"
-  has_many :stats,    :class_name => "ActiveRecordStat",    :foreign_key => "article_id"
+class MongoidArticle
+
+  include Mongoid::Document
+
+
+  has_many :comments, :class_name => "MongoidComment", :foreign_key => "article_id"
+  has_many :stats,    :class_name => "MongoidStat",    :foreign_key => "article_id"
+
+  # def index
+  #   "KEEP OFF MY INDEX!!!"
+  # end
+  #
+  # def self.settings
+  #   "KEEP OFF MY SETTINGS!!!"
+  # end
 
   include Tire::Model::Search
   include Tire::Model::Callbacks
@@ -20,12 +32,16 @@ class ActiveRecordArticle < ActiveRecord::Base
     end
   end
 
+  # tire.mapping do
+  #   indexes :title,      :type => 'string', :boost => 10, :analyzer => 'snowball'
+  # end
+
   def to_indexed_json
     {
       :title        => title,
       :length       => length,
 
-      :comments     => comments.map { |c| { :_type  => 'active_record_comment',
+      :comments     => comments.map { |c| { :_type  => 'mongoid_comment',
                                             :_id    => c.id,
                                             :author => c.author,
                                             :body   => c.body  } },
@@ -42,15 +58,26 @@ class ActiveRecordArticle < ActiveRecord::Base
   end
 end
 
-class ActiveRecordComment < ActiveRecord::Base
-  belongs_to :article, :class_name => "ActiveRecordArticle", :foreign_key => "article_id"
+class MongoidComment
+
+  include Mongoid::Document
+
+
+  belongs_to :article, :class_name => "MongoidArticle", :foreign_key => "article_id"
 end
 
-class ActiveRecordStat < ActiveRecord::Base
-  belongs_to :article, :class_name => "ActiveRecordArticle", :foreign_key => "article_id"
+class MongoidStat
+
+  include Mongoid::Document
+
+
+  belongs_to :article, :class_name => "MongoidArticle", :foreign_key => "article_id"
 end
 
-class ActiveRecordClassWithTireMethods < ActiveRecord::Base
+class MongoidClassWithTireMethods
+
+  include Mongoid::Document
+
 
   def self.mapping
     "THIS IS MY MAPPING!"
@@ -67,14 +94,5 @@ class ActiveRecordClassWithTireMethods < ActiveRecord::Base
     mapping do
       indexes :title, :type => 'string', :analyzer => 'snowball'
     end
-  end
-end
-
-class ActiveRecordClassWithDynamicIndexName < ActiveRecord::Base
-  include Tire::Model::Search
-  include Tire::Model::Callbacks
-
-  index_name do
-    "dynamic" + '_' + "index"
   end
 end

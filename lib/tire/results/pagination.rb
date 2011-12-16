@@ -1,6 +1,8 @@
 module Tire
   module Results
 
+    # Adds support for WillPaginate and Kaminari
+    #
     module Pagination
 
       def total_entries
@@ -19,7 +21,7 @@ module Tire
         if @options[:page]
           @options[:page].to_i
         else
-          (@options[:size].to_i + @options[:from].to_i) / @options[:size].to_i
+          (per_page + @options[:from].to_i) / per_page
         end
       end
 
@@ -38,6 +40,13 @@ module Tire
       def out_of_bounds?
         current_page > total_pages
       end
+
+      # Kaminari support
+      #
+      alias :limit_value  :per_page
+      alias :total_count  :total_entries
+      alias :num_pages    :total_pages
+      alias :offset_value :offset
 
     end
 
